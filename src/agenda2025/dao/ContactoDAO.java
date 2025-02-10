@@ -6,9 +6,11 @@ package agenda2025.dao;
 
 import agenda2025.db.ConnectionDB;
 import agenda2025.model.Contacto;
+import agenda2025.model.Telefono;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,14 +65,11 @@ public class ContactoDAO {
                 String direccion = rs.getString("direccion");
                 
                 Contacto contacto = new Contacto(idContacto, nombres, apellidos, direccion);
-                
                 contactos.add(contacto);
             }
-            
         }catch(Exception ex) {
             System.out.println(ex.toString());
         }
-        
         return contactos;
     }
     
@@ -121,4 +120,53 @@ public class ContactoDAO {
         }
     }
     
+    public static void createFullContacto(Contacto contacto, List<Telefono> listTelefono) {
+        
+        ConnectionDB conexion = new ConnectionDB();
+        try(Connection cnx = conexion.getConnection();)
+        {
+            try{
+                //Para evitar que se haga commit en cada transaccion
+                if(cnx.getAutoCommit()){
+                    cnx.setAutoCommit(false);
+                }
+                
+                PreparedStatement preparedStatement = null;
+                ResultSet resultSet = null;
+                
+                String queryInsertContacto = "insert into contacto (nombres, apellidos, direccion) values (?, ?, ?)";
+                preparedStatement = cnx.prepareStatement(queryInsertContacto);
+                preparedStatement.setString(1, contacto.getNombres());
+                preparedStatement.setString(2, contacto.getApellidos());
+                preparedStatement.setString(3, contacto.getDireccion());
+                preparedStatement.executeUpdate();
+                
+                String queryLastID = "select LAST_INSERT_ID()";
+                preparedStatement = cnx.prepareStatement(queryLastID);
+                resultSet = preparedStatement.executeQuery();
+                int idContacto = 0;
+                if(resultSet.next()) {
+                    idContacto = resultSet.getInt(1);
+                }
+                
+                for(Telefono telefono : listTelefono) {
+                    String queryInsertTelefono = "insert into telefono (numero_telefono, tipo_telefono, contacto) values (?, ?, ?)";
+                    preparedStatement = cnx.prepareStatement(queryInsertTelefono);
+                    preparedStatement.setString(1, telefono.getNumeroTelefono());
+                    preparedStatement.setInt(2, telefono.getTipoTelefono());
+                    preparedStatement.setInt(3, idContacto);
+                    preparedStatement.executeUpdate();
+                }
+                
+                cnx.commit();
+                
+            }catch(Exception ex) {
+                cnx.rollback();
+            }
+            
+        }catch(SQLException ex) {
+            System.out.println(ex.toString());
+        }
+        
+    }
 }

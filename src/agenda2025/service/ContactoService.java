@@ -6,6 +6,7 @@ package agenda2025.service;
 
 import agenda2025.dao.ContactoDAO;
 import agenda2025.model.Contacto;
+import agenda2025.model.Telefono;
 import java.util.List;
 
 /**
@@ -32,6 +33,11 @@ public class ContactoService {
     public static void edit(Contacto contacto) {
         //Validaciones previas
         ContactoDAO.edit(contacto);
+    }
+    
+    public static void createFullContacto(Contacto contacto, List<Telefono> listTelefono) {
+        //Validaciones previas
+        ContactoDAO.createFullContacto(contacto, listTelefono);
     }
     
 }
